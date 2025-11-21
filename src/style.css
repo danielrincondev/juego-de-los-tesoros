@@ -176,7 +176,7 @@ button:disabled {
   max-height: 300px;
   overflow-y: auto;
   color: #4ade80;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   font-size: 12px;
 }
 
