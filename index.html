@@ -13,21 +13,17 @@
     />
   </head>
   <body>
+    <div class="isometric-grid"></div>
     <div id="app">
       <nav class="navbar">
-        <div class="logo">
+        <div class="logo" id="app-logo" style="cursor: pointer">
           <span style="font-weight: 700; letter-spacing: -0.5px">ESPOL</span>
           <span style="color: var(--text-dim)">/ CCPG1049</span>
         </div>
         <div class="nav-links">
-          <a href="#">Objetivos</a>
-          <a href="#">Reglas</a>
-          <a href="#">Equipo</a>
-          <a href="#">Documentación</a>
+          <!-- Links removed -->
         </div>
-        <a href="https://www.espol.edu.ec" target="_blank" class="btn-white"
-          >ESPOL</a
-        >
+        <button id="btn-team" class="btn-white">EQUIPO</button>
       </nav>
 
       <main>
@@ -55,33 +51,25 @@
                 />
               </div>
               <div class="cta-group">
-                <button id="btn-start" class="btn-white">INICIAR JUEGO</button>
-                <a href="#" class="btn-link">Ver Reglas</a>
+                <button id="btn-start" class="btn-white btn-large">
+                  INICIAR JUEGO
+                </button>
+                <button id="btn-rules" class="btn-ghost">REGLAS</button>
               </div>
               <p id="config-error" class="error-msg"></p>
             </div>
           </div>
-          <div class="hero-graphic">
-            <pre class="ascii-art">
-      .
-     / \
-    /   \
-   /  $  \
-  /_______\
-  |       |
-  |  [+]  |
-  |_______|
-   /     \
-  /_______\
-            </pre>
+          <div class="hero-graphic" id="hero-graphic">
+            <!-- Grid moved to background -->
           </div>
         </section>
 
         <!-- Game Screen -->
         <section id="game-screen" class="preview-section hidden">
+          <div id="board-visual" class="board-visual"></div>
           <div class="tabs">
             <button class="tab active">GAME CONSOLE</button>
-            <button class="tab">MIPS LOGS</button>
+            <button class="tab" id="btn-mips">MIPS CODE</button>
             <div class="spacer"></div>
             <button class="tab" id="btn-reset">RESTART</button>
           </div>
@@ -89,7 +77,10 @@
           <div class="preview-grid">
             <!-- Player Column -->
             <div class="preview-col">
-              <div class="col-header">JUGADOR (USUARIO)</div>
+              <div class="col-header">
+                JUGADOR (USUARIO)
+                <div class="indicator player-indicator"></div>
+              </div>
               <div class="code-block">
                 <div class="stat-item">
                   <span class="label">POSICIÓN</span>
@@ -135,7 +126,10 @@
 
             <!-- Machine Column -->
             <div class="preview-col">
-              <div class="col-header">MÁQUINA (CPU)</div>
+              <div class="col-header">
+                MÁQUINA (CPU)
+                <div class="indicator machine-indicator"></div>
+              </div>
               <div class="code-block">
                 <div class="stat-item">
                   <span class="label">POSICIÓN</span>
@@ -186,6 +180,78 @@
             </div>
           </div>
         </section>
+
+        <!-- Team Modal -->
+        <div id="team-modal" class="modal hidden">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3>INTEGRANTES DEL EQUIPO</h3>
+              <button id="close-modal" class="close-btn">×</button>
+            </div>
+            <div class="team-list">
+              <div class="team-member">
+                <span class="role">ESTUDIANTE</span>
+                <span class="name">RINCON HERNANDEZ DANIEL EFRAIN</span>
+              </div>
+              <div class="team-member">
+                <span class="role">ESTUDIANTE</span>
+                <span class="name">AYALA HURTADO DANNA ANTONELLA</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rules Modal -->
+        <div id="rules-modal" class="modal hidden">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3>REGLAS DEL JUEGO</h3>
+              <button id="close-rules-modal" class="close-btn">×</button>
+            </div>
+            <div class="rules-grid-modal">
+              <div class="rule-item">
+                <h4>01. EL TABLERO</h4>
+                <p>
+                  Unidimensional de 20 a 120 casillas. Contiene tesoros (30%) y
+                  dinero ($0-$100).
+                </p>
+              </div>
+              <div class="rule-item">
+                <h4>02. TURNOS</h4>
+                <p>
+                  Jugador elige avanzar 1-6 casillas. La máquina lanza un dado
+                  aleatorio (1-6).
+                </p>
+              </div>
+              <div class="rule-item">
+                <h4>03. VICTORIA</h4>
+                <p>
+                  Gana quien encuentre 3 tesoros primero o quien tenga más
+                  dinero al llegar al final.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MIPS Modal -->
+        <div id="mips-modal" class="modal hidden">
+          <div class="modal-content wide-modal">
+            <div class="modal-header">
+              <h3>REGISTROS MIPS</h3>
+              <button id="close-mips-modal" class="close-btn">×</button>
+            </div>
+            <div class="mips-content">
+              <div
+                class="code-block terminal-scroll"
+                id="mips-code-display"
+                style="max-height: 400px"
+              >
+                <!-- Code will be injected here -->
+              </div>
+            </div>
+          </div>
+        </div>
       </main>
     </div>
     <script type="module" src="/src/main.ts"></script>
