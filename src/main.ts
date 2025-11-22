@@ -1,193 +1,271 @@
-import "./style.css";
-import { MIPS } from "@specy/mips";
+import './style.css'
 
-// Function to generate MIPS code with dynamic n value
-function generateFibonacciCode(n: number): string {
-  return `
-.data
-  prompt: .asciiz "Fibonacci(${n}) = "
-  newline: .asciiz "\\n"
-  
-.text
-main:
-  # Print prompt
-  li $v0, 4
-  la $a0, prompt
-  syscall
-  
-  # Calculate fibonacci(${n})
-  li $a0, ${n}
-  jal fibonacci
-  
-  # Print result
-  move $a0, $v0
-  li $v0, 1
-  syscall
-  
-  # Print newline
-  li $v0, 4
-  la $a0, newline
-  syscall
-  
-  # Exit
-  li $v0, 10
-  syscall
-
-# Recursive fibonacci function
-# Input: $a0 = n
-# Output: $v0 = fib(n)
-fibonacci:
-  # Base case: if n <= 1, return n
-  slti $t0, $a0, 2
-  beq $t0, $zero, fib_recursive
-  move $v0, $a0
-  jr $ra
-
-fib_recursive:
-  # Save registers
-  addi $sp, $sp, -12
-  sw $ra, 8($sp)
-  sw $s0, 4($sp)
-  sw $s1, 0($sp)
-  
-  # Save n
-  move $s0, $a0
-  
-  # Calculate fib(n-1)
-  addi $a0, $s0, -1
-  jal fibonacci
-  move $s1, $v0
-  
-  # Calculate fib(n-2)
-  addi $a0, $s0, -2
-  jal fibonacci
-  
-  # Result = fib(n-1) + fib(n-2)
-  add $v0, $s1, $v0
-  
-  # Restore registers
-  lw $s1, 0($sp)
-  lw $s0, 4($sp)
-  lw $ra, 8($sp)
-  addi $sp, $sp, 12
-  
-  jr $ra
-`;
+// --- Game State Interfaces ---
+interface PlayerState {
+  position: number;
+  money: number;
+  treasures: number;
+  finished: boolean;
 }
 
-// Run MIPS Fibonacci simulator
-function runFibonacci(n: number) {
-  const mipsOutput = document.getElementById("mipsOutput");
-
-  if (!mipsOutput) return;
-
-  try {
-    const code = generateFibonacciCode(n);
-    const mips = MIPS.makeMipsFromSource(code);
-
-    mipsOutput.textContent = "";
-    mipsOutput.textContent += `Ejecutando Fibonacci(${n})...\n\n`;
-
-    // Register handlers for syscalls
-    mips.registerHandler("printString", (s: string) => {
-      mipsOutput.textContent += s;
-    });
-
-    mips.registerHandler("printChar", (c: string) => {
-      mipsOutput.textContent += c;
-    });
-
-    mips.registerHandler("printInt", (i: number) => {
-      mipsOutput.textContent += i.toString();
-    });
-
-    mips.registerHandler("log", (message: string) => {
-      mipsOutput.textContent += message;
-    });
-
-    mips.registerHandler("logLine", (message: string) => {
-      mipsOutput.textContent += message + "\n";
-    });
-
-    // Assemble the program
-    mips.assemble();
-
-    // Initialize (start at main)
-    mips.initialize(true);
-
-    // Execute the program with a higher limit for recursive algorithms
-    const startTime = performance.now();
-    const terminated = mips.simulateWithLimit(10000000);
-    const endTime = performance.now();
-
-    mipsOutput.textContent += `\n\nEstado: ${
-      terminated ? "Completado" : "Límite alcanzado"
-    }\n`;
-    mipsOutput.textContent += `Tiempo de ejecución: ${(
-      endTime - startTime
-    ).toFixed(2)}ms\n`;
-    mipsOutput.textContent += `Instrucciones ejecutadas en el simulador\n`;
-  } catch (error) {
-    mipsOutput.textContent = "Error: " + (error as Error).message;
-    console.error(error);
-  }
+interface Tile {
+  type: 'treasure' | 'money';
+  value: number; // Amount of money or 1 for treasure
+  claimed: boolean; // If true, the item has been taken
 }
 
-// Initialize the app
-document.addEventListener("DOMContentLoaded", () => {
-  console.log("App initialized");
+// --- Global State ---
+let boardSize: number = 30;
+let board: Tile[] = [];
+let player: PlayerState = { position: 0, money: 0, treasures: 0, finished: false };
+let machine: PlayerState = { position: 0, money: 0, treasures: 0, finished: false };
+let gameActive: boolean = false;
+let turnCount: number = 0;
 
-  // Run Fibonacci on load
-  const fibInput = document.getElementById("fibInput") as HTMLInputElement;
-  if (fibInput) {
-    runFibonacci(parseInt(fibInput.value));
+// --- DOM Elements ---
+const welcomeScreen = document.getElementById('welcome-screen')!;
+const gameScreen = document.getElementById('game-screen')!;
+const boardSizeInput = document.getElementById('board-size-input') as HTMLInputElement;
+const btnStart = document.getElementById('btn-start')!;
+const configError = document.getElementById('config-error')!;
+
+const btnMove = document.getElementById('btn-move')!;
+const moveInput = document.getElementById('move-input') as HTMLInputElement;
+const btnReset = document.getElementById('btn-reset')!;
+
+const logsContainer = document.getElementById('game-logs')!;
+
+// Stats Elements
+const els = {
+  pPos: document.getElementById('p-pos')!,
+  pMoney: document.getElementById('p-money')!,
+  pTreasures: document.getElementById('p-treasures')!,
+  mPos: document.getElementById('m-pos')!,
+  mMoney: document.getElementById('m-money')!,
+  mTreasures: document.getElementById('m-treasures')!,
+  mRoll: document.getElementById('m-roll')!,
+  status: document.getElementById('game-status')!,
+  turn: document.getElementById('turn-indicator')!
+};
+
+// --- Initialization ---
+btnStart.addEventListener('click', () => {
+  const size = parseInt(boardSizeInput.value);
+  if (isNaN(size) || size < 20 || size > 120) {
+    configError.textContent = "Error: El tamaño debe estar entre 20 y 120.";
+    return;
   }
-
-  // Setup Fibonacci controls
-  const runFibBtn = document.getElementById("runFibonacci");
-  const clearBtn = document.getElementById("clearOutput");
-
-  if (runFibBtn && fibInput) {
-    runFibBtn.addEventListener("click", () => {
-      const n = parseInt(fibInput.value);
-      if (n >= 0 && n <= 30) {
-        runFibonacci(n);
-      } else {
-        alert("Por favor ingresa un número entre 0 y 30");
-      }
-    });
-  }
-
-  if (clearBtn) {
-    clearBtn.addEventListener("click", () => {
-      const mipsOutput = document.getElementById("mipsOutput");
-      if (mipsOutput) {
-        mipsOutput.textContent = "";
-      }
-    });
-  }
-
-  // Setup event listeners
-  const startGameBtn = document.getElementById("startGame");
-  const movePlayerBtn = document.getElementById("movePlayer");
-  const moveMachineBtn = document.getElementById("moveMachine");
-
-  if (startGameBtn) {
-    startGameBtn.addEventListener("click", () => {
-      console.log("Start game clicked");
-      alert("Game initialization will be implemented with full MIPS code");
-    });
-  }
-
-  if (movePlayerBtn) {
-    movePlayerBtn.addEventListener("click", () => {
-      console.log("Move player clicked");
-    });
-  }
-
-  if (moveMachineBtn) {
-    moveMachineBtn.addEventListener("click", () => {
-      console.log("Move machine clicked");
-    });
-  }
+  configError.textContent = "";
+  startGame(size);
 });
+
+btnReset.addEventListener('click', () => {
+  gameScreen.classList.add('hidden');
+  welcomeScreen.classList.remove('hidden');
+  log("--- REINICIANDO SISTEMA ---", 'dim');
+});
+
+btnMove.addEventListener('click', () => {
+  if (!gameActive) return;
+  
+  const steps = parseInt(moveInput.value);
+  if (isNaN(steps) || steps < 1 || steps > 6) {
+    log("Error: Movimiento inválido. Ingrese 1-6.", 'error');
+    return;
+  }
+  
+  playTurn(steps);
+});
+
+// --- Game Logic ---
+
+function startGame(size: number) {
+  boardSize = size;
+  generateBoard(size);
+  
+  // Reset State
+  player = { position: 0, money: 0, treasures: 0, finished: false };
+  machine = { position: 0, money: 0, treasures: 0, finished: false };
+  gameActive = true;
+  turnCount = 1;
+  
+  // UI Updates
+  welcomeScreen.classList.add('hidden');
+  gameScreen.classList.remove('hidden');
+  updateStats();
+  
+  // Clear Logs
+  logsContainer.innerHTML = '';
+  log("=== INICIALIZANDO JUEGO DE LOS TESOROS ===", 'highlight');
+  log(`Tablero generado: ${size} casillas.`, 'dim');
+  log(`Tesoros escondidos: ${Math.floor(size * 0.3)}`, 'dim');
+  log("Esperando comando del jugador...", 'success');
+}
+
+function generateBoard(size: number) {
+  board = [];
+  const numTreasures = Math.floor(size * 0.3);
+  
+  // Initialize with money
+  for (let i = 0; i < size; i++) {
+    board.push({
+      type: 'money',
+      value: Math.floor(Math.random() * (100 - 10 + 1)) + 10,
+      claimed: false
+    });
+  }
+  
+  // Place treasures randomly
+  let placed = 0;
+  while (placed < numTreasures) {
+    const idx = Math.floor(Math.random() * size);
+    if (board[idx].type !== 'treasure') {
+      board[idx] = { type: 'treasure', value: 1, claimed: false };
+      placed++;
+    }
+  }
+}
+
+function playTurn(playerSteps: number) {
+  log(`\n--- TURNO ${turnCount} ---`, 'highlight');
+  
+  // 1. Player Move
+  if (!player.finished) {
+    moveEntity('Jugador', player, playerSteps);
+  } else {
+    log("Jugador ya llegó al final. Esperando a la máquina...", 'dim');
+  }
+  
+  if (checkGameOver()) return;
+  
+  // 2. Machine Move
+  if (!machine.finished) {
+    const machineSteps = Math.floor(Math.random() * 6) + 1;
+    els.mRoll.textContent = machineSteps.toString();
+    
+    // Small delay for realism
+    setTimeout(() => {
+      moveEntity('Máquina', machine, machineSteps);
+      if (!checkGameOver()) {
+        turnCount++;
+        els.turn.textContent = `Turno ${turnCount}`;
+      }
+    }, 500);
+  } else {
+    log("Máquina ya llegó al final.", 'dim');
+    if (!checkGameOver()) {
+        turnCount++;
+        els.turn.textContent = `Turno ${turnCount}`;
+    }
+  }
+}
+
+function moveEntity(name: string, entity: PlayerState, steps: number) {
+  const oldPos = entity.position;
+  let newPos = oldPos + steps;
+  
+  if (newPos >= boardSize - 1) {
+    newPos = boardSize - 1;
+    entity.finished = true;
+    log(`${name} ha llegado al final del tablero!`, 'highlight');
+  }
+  
+  entity.position = newPos;
+  log(`${name} avanza ${steps} casillas a pos ${newPos}.`);
+  
+  // Check Tile
+  const tile = board[newPos];
+  if (tile.claimed) {
+    log(`  > Casilla ${newPos} vacía (ya visitada).`, 'dim');
+  } else {
+    tile.claimed = true;
+    if (tile.type === 'treasure') {
+      entity.treasures++;
+      log(`  > ¡${name} encontró un TESORO! 💎 (${entity.treasures}/3)`, 'success');
+    } else {
+      entity.money += tile.value;
+      log(`  > ${name} encontró $${tile.value}. Total: $${entity.money}`, 'success');
+    }
+  }
+  
+  updateStats();
+}
+
+function checkGameOver(): boolean {
+  let reason = "";
+  let over = false;
+  
+  if (player.treasures >= 3) {
+    reason = "Jugador encontró 3 tesoros.";
+    over = true;
+  } else if (machine.treasures >= 3) {
+    reason = "Máquina encontró 3 tesoros.";
+    over = true;
+  } else if (player.finished && machine.finished) {
+    reason = "Ambos llegaron al final.";
+    over = true;
+  }
+  
+  if (over) {
+    endGame(reason);
+    return true;
+  }
+  return false;
+}
+
+function endGame(reason: string) {
+  gameActive = false;
+  log(`\n=== JUEGO TERMINADO: ${reason} ===`, 'highlight');
+  
+  let winner = "";
+  let totalPot = player.money + machine.money;
+  
+  if (player.money > machine.money) {
+    winner = "JUGADOR";
+  } else if (machine.money > player.money) {
+    winner = "MÁQUINA";
+  } else {
+    // Tie break by treasures
+    if (player.treasures > machine.treasures) {
+      winner = "JUGADOR (por tesoros)";
+    } else if (machine.treasures > player.treasures) {
+      winner = "MÁQUINA (por tesoros)";
+    } else {
+      winner = "EMPATE";
+    }
+  }
+  
+  log(`Dinero Jugador: $${player.money} | Tesoros: ${player.treasures}`);
+  log(`Dinero Máquina: $${machine.money} | Tesoros: ${machine.treasures}`);
+  log(`--------------------------------`);
+  
+  if (winner === "EMPATE") {
+    log(`¡ES UN EMPATE! Nadie se lleva el pozo.`, 'highlight');
+    els.status.textContent = "EMPATE";
+  } else {
+    log(`¡GANADOR: ${winner}! ��`, 'success');
+    log(`Premio total acumulado: $${totalPot}`, 'success');
+    els.status.textContent = `GANADOR: ${winner}`;
+  }
+}
+
+function updateStats() {
+  els.pPos.textContent = player.position.toString();
+  els.pMoney.textContent = player.money.toString();
+  els.pTreasures.textContent = player.treasures.toString();
+  
+  els.mPos.textContent = machine.position.toString();
+  els.mMoney.textContent = machine.money.toString();
+  els.mTreasures.textContent = machine.treasures.toString();
+  
+  els.status.textContent = gameActive ? "EN PROGRESO" : "FINALIZADO";
+  els.turn.textContent = `Turno ${turnCount}`;
+}
+
+function log(msg: string, type: 'normal' | 'success' | 'error' | 'dim' | 'highlight' = 'normal') {
+  const div = document.createElement('div');
+  div.className = `code-line ${type}`;
+  div.textContent = `> ${msg}`;
+  logsContainer.appendChild(div);
+  logsContainer.scrollTop = logsContainer.scrollHeight;
+}

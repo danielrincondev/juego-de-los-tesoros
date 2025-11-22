@@ -4,48 +4,189 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Juego de los Tesoros - MIPS Simulator</title>
+    <title>Juego de los Tesoros - ESPOL</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
     <div id="app">
-      <h1>Juego de los Tesoros</h1>
-      <div class="container">
-        <div class="controls">
-          <h2>Configuración</h2>
-          <div class="control-group">
-            <label for="boardSize">Tamaño del tablero (20-120):</label>
-            <input type="number" id="boardSize" min="20" max="120" value="30" />
-            <button id="startGame">Iniciar Juego</button>
-          </div>
+      <nav class="navbar">
+        <div class="logo">
+          <span style="font-weight: 700; letter-spacing: -0.5px">ESPOL</span>
+          <span style="color: var(--text-dim)">/ CCPG1049</span>
         </div>
+        <div class="nav-links">
+          <a href="#">Objetivos</a>
+          <a href="#">Reglas</a>
+          <a href="#">Equipo</a>
+          <a href="#">Documentación</a>
+        </div>
+        <a href="https://www.espol.edu.ec" target="_blank" class="btn-white"
+          >ESPOL</a
+        >
+      </nav>
 
-        <div class="game-area">
-          <h2>Estado del Juego</h2>
-          <div id="gameStatus"></div>
-          <div id="board"></div>
+      <main>
+        <!-- Welcome / Config Screen -->
+        <section id="welcome-screen" class="hero">
+          <div class="hero-content">
+            <div class="badge">
+              PROYECTO <span class="y-combinator">1ER</span> PARCIAL
+            </div>
+            <h1>Juego de los<br />Tesoros</h1>
+            <p class="subtitle">
+              Organización de Computadores. Simulación de bajo nivel.
+            </p>
 
-          <div class="player-controls">
-            <h3>Turno del Jugador</h3>
-            <label for="playerMove">Avanzar (1-6):</label>
-            <input type="number" id="playerMove" min="1" max="6" value="1" />
-            <button id="movePlayer">Mover Jugador</button>
-            <button id="moveMachine">Turno de la Máquina</button>
+            <div class="config-box">
+              <div class="input-group">
+                <label>TAMAÑO DEL TABLERO (20-120)</label>
+                <input
+                  type="number"
+                  id="board-size-input"
+                  min="20"
+                  max="120"
+                  value="30"
+                  class="dark-input"
+                />
+              </div>
+              <div class="cta-group">
+                <button id="btn-start" class="btn-white">INICIAR JUEGO</button>
+                <a href="#" class="btn-link">Ver Reglas</a>
+              </div>
+              <p id="config-error" class="error-msg"></p>
+            </div>
+          </div>
+          <div class="hero-graphic">
+            <pre class="ascii-art">
+      .
+     / \
+    /   \
+   /  $  \
+  /_______\
+  |       |
+  |  [+]  |
+  |_______|
+   /     \
+  /_______\
+            </pre>
+          </div>
+        </section>
+
+        <!-- Game Screen -->
+        <section id="game-screen" class="preview-section hidden">
+          <div class="tabs">
+            <button class="tab active">GAME CONSOLE</button>
+            <button class="tab">MIPS LOGS</button>
+            <div class="spacer"></div>
+            <button class="tab" id="btn-reset">RESTART</button>
           </div>
 
-          <div id="statistics"></div>
-        </div>
+          <div class="preview-grid">
+            <!-- Player Column -->
+            <div class="preview-col">
+              <div class="col-header">JUGADOR (USUARIO)</div>
+              <div class="code-block">
+                <div class="stat-item">
+                  <span class="label">POSICIÓN</span>
+                  <span class="value-text" id="p-pos">0</span>
+                </div>
+                <div class="stat-item">
+                  <span class="label">DINERO</span>
+                  <span class="value-text success"
+                    >$<span id="p-money">0</span></span
+                  >
+                </div>
+                <div class="stat-item">
+                  <span class="label">TESOROS</span>
+                  <span class="value-text accent"
+                    ><span id="p-treasures">0</span>/3</span
+                  >
+                </div>
 
-        <div class="mips-section">
-          <h2>MIPS Fibonacci Calculator</h2>
-          <div class="control-group">
-            <label for="fibInput">Calcular Fibonacci de:</label>
-            <input type="number" id="fibInput" min="0" max="30" value="20" />
-            <button id="runFibonacci">Ejecutar</button>
-            <button id="clearOutput">Limpiar</button>
+                <div class="control-area">
+                  <div
+                    class="col-header"
+                    style="margin-top: 2rem; margin-bottom: 0.5rem"
+                  >
+                    ACCIONES
+                  </div>
+                  <div class="input-row">
+                    <input
+                      type="number"
+                      id="move-input"
+                      min="1"
+                      max="6"
+                      value="1"
+                      class="dark-input small"
+                    />
+                    <button id="btn-move" class="btn-white small">
+                      AVANZAR
+                    </button>
+                  </div>
+                  <div class="input-help">Ingrese 1-6 casillas</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Machine Column -->
+            <div class="preview-col">
+              <div class="col-header">MÁQUINA (CPU)</div>
+              <div class="code-block">
+                <div class="stat-item">
+                  <span class="label">POSICIÓN</span>
+                  <span class="value-text" id="m-pos">0</span>
+                </div>
+                <div class="stat-item">
+                  <span class="label">DINERO</span>
+                  <span class="value-text success"
+                    >$<span id="m-money">0</span></span
+                  >
+                </div>
+                <div class="stat-item">
+                  <span class="label">TESOROS</span>
+                  <span class="value-text accent"
+                    ><span id="m-treasures">0</span>/3</span
+                  >
+                </div>
+
+                <div class="stat-item" style="margin-top: 2rem">
+                  <span class="label">ÚLTIMO DADO</span>
+                  <span class="value-text" id="m-roll">-</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Logs Column -->
+            <div class="preview-col wide">
+              <div class="user-info">
+                <div class="info-group">
+                  <label>ESTADO</label>
+                  <div class="value" id="game-status">ESPERANDO INICIO...</div>
+                </div>
+                <div class="info-group">
+                  <label>TURNO</label>
+                  <div class="value" id="turn-indicator">-</div>
+                </div>
+              </div>
+
+              <div class="sdk-preview">
+                <div class="sdk-header">
+                  <span>TERMINAL OUTPUT</span>
+                  <span class="badge-blue">LIVE</span>
+                </div>
+                <div class="code-block terminal-scroll" id="game-logs">
+                  <div class="code-line dim">System initialized...</div>
+                </div>
+              </div>
+            </div>
           </div>
-          <pre id="mipsOutput"></pre>
-        </div>
-      </div>
+        </section>
+      </main>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
