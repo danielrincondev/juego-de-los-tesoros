@@ -2,34 +2,22 @@ import "./style.css";
 import { MIPS } from "@specy/mips";
 import { mipsCode } from "./mips-code";
 
-let mips: any = null; // Using any to avoid type issues if types are missing
+let mips: any = null;
 
 function initMips() {
   mips = MIPS.makeMipsFromSource(mipsCode);
   mips.assemble();
-  mips.initialize(true); // Start at main
+  mips.initialize(true);
   runMipsUntilWait();
 }
 
 function runMipsUntilWait() {
   if (!mips) return;
   let steps = 0;
-  // Run until $v0 is 0 (Wait Loop)
-  // Note: We need to step at least once if we just set a command
-  // But if we are initializing, we run until we hit the wait loop.
-  // The wait loop is: beq $v0, 0, wait_loop
-  // If we are in the loop, we are effectively waiting.
-  // We can just run a fixed number of steps or check PC?
-  // Checking $v0 == 0 is the protocol.
-
-  // If we just set $v0 != 0, we need to run until it becomes 0 again.
   while (steps < 200000) {
     const done = mips.step();
     if (done) break;
 
-    // Check if we are back to wait state (v0 == 0)
-    // But we need to ensure we actually left the wait state if we were in it.
-    // Since we set v0 before calling this, we are not in wait state (condition fails).
     if (mips.getRegisterValue("$v0") === 0) {
       break;
     }
@@ -44,7 +32,6 @@ function sendCommand(cmd: number, arg0: number = 0) {
   runMipsUntilWait();
 }
 
-// Display MIPS Code
 const mipsDisplay = document.getElementById("mips-code-display");
 if (mipsDisplay) {
   const lines = mipsCode.split("\n");
@@ -58,9 +45,7 @@ if (mipsDisplay) {
     .join("");
 }
 
-// --- Game State Interfaces ---
 interface PlayerState {
-  // ...existing code...
   position: number;
   money: number;
   treasures: number;
@@ -68,13 +53,6 @@ interface PlayerState {
   visited: number[];
 }
 
-interface Tile {
-  type: "treasure" | "money";
-  value: number; // Amount of money or 1 for treasure
-  claimed: boolean; // If true, the item has been taken
-}
-
-// --- Global State ---
 let boardSize: number = 30;
 let initialBoard: number[] = [];
 let player: PlayerState = {
@@ -94,7 +72,6 @@ let machine: PlayerState = {
 let gameActive: boolean = false;
 let turnCount: number = 0;
 
-// --- DOM Elements ---
 const welcomeScreen = document.getElementById("welcome-screen")!;
 const gameScreen = document.getElementById("game-screen")!;
 const boardSizeInput = document.getElementById(
@@ -110,7 +87,6 @@ const appLogo = document.getElementById("app-logo")!;
 
 const logsContainer = document.getElementById("game-logs")!;
 
-// Stats Elements
 const els = {
   pPos: document.getElementById("p-pos")!,
   pMoney: document.getElementById("p-money")!,
@@ -123,7 +99,6 @@ const els = {
   turn: document.getElementById("turn-indicator")!,
 };
 
-// --- Initialization ---
 btnStart.addEventListener("click", () => {
   const size = parseInt(boardSizeInput.value);
   if (isNaN(size) || size < 20 || size > 120) {
@@ -137,12 +112,14 @@ btnStart.addEventListener("click", () => {
 btnReset.addEventListener("click", () => {
   gameScreen.classList.add("hidden");
   welcomeScreen.classList.remove("hidden");
+  if (btnTeam) btnTeam.textContent = "EQUIPO";
   log("--- REINICIANDO SISTEMA ---", "dim");
 });
 
 appLogo.addEventListener("click", () => {
   gameScreen.classList.add("hidden");
   welcomeScreen.classList.remove("hidden");
+  if (btnTeam) btnTeam.textContent = "EQUIPO";
   log("--- REINICIANDO SISTEMA ---", "dim");
 });
 
@@ -158,44 +135,33 @@ btnMove.addEventListener("click", () => {
   playTurn(steps);
 });
 
-// --- Game Logic ---
-
 function startGame(size: number) {
   boardSize = size;
 
-  // Reset JS State
   player.visited = [0];
   machine.visited = [0];
   player.finished = false;
   machine.finished = false;
 
-  // Initialize MIPS
   initMips();
-  sendCommand(1, size); // Command 1: Init
+  sendCommand(1, size);
 
-  // Capture initial board state for visualization
   captureInitialBoard();
 
-  // Reset State (Read from MIPS)
   updateFromMips();
 
   gameActive = true;
   turnCount = 1;
 
-  // UI Updates
   welcomeScreen.classList.add("hidden");
   gameScreen.classList.remove("hidden");
+  if (btnTeam) btnTeam.textContent = "REINICIAR";
   updateStats();
 
-  // Clear Logs
   logsContainer.innerHTML = "";
   log("=== INICIALIZANDO JUEGO DE LOS TESOROS (MIPS) ===", "highlight");
   log(`Tablero generado: ${size} casillas.`, "dim");
   log("Esperando comando del jugador...", "success");
-}
-
-function generateBoard() {
-  // No-op in JS, handled by MIPS
 }
 
 function captureInitialBoard() {
@@ -211,7 +177,6 @@ function captureInitialBoard() {
       (bytes[i * 4 + 1] << 8) |
       (bytes[i * 4 + 2] << 16) |
       (bytes[i * 4 + 3] << 24);
-    // Handle signed 32-bit integer for -1
     if (val > 2147483647) val = val - 4294967296;
     initialBoard.push(val);
   }
@@ -220,12 +185,11 @@ function captureInitialBoard() {
 function playTurn(playerSteps: number) {
   log(`\n--- TURNO ${turnCount} ---`, "highlight");
 
-  // 1. Player Move
   if (!player.finished) {
     const oldMoney = player.money;
     const oldTreasures = player.treasures;
 
-    sendCommand(2, playerSteps); // Command 2: Player Move
+    sendCommand(2, playerSteps);
     updateFromMips();
 
     log(`Jugador avanza ${playerSteps} casillas a pos ${player.position}.`);
@@ -235,7 +199,6 @@ function playTurn(playerSteps: number) {
       player.finished = true;
     }
 
-    // Log what happened
     if (player.treasures > oldTreasures) {
       log(
         `  > ¡Jugador encontró un TESORO! 💎 (${player.treasures}/3)`,
@@ -257,13 +220,8 @@ function playTurn(playerSteps: number) {
 
   if (checkGameOver()) return;
 
-  // 2. Machine Move
   if (!machine.finished) {
-    // Machine move is handled by MIPS random generation
-    // But we need to know the roll?
-    // My MIPS code puts the roll in $v1
-
-    sendCommand(3); // Command 3: Machine Move
+    sendCommand(3);
     const roll = mips.getRegisterValue("$v1");
     els.mRoll.textContent = roll.toString();
 
@@ -272,7 +230,6 @@ function playTurn(playerSteps: number) {
 
     updateFromMips();
 
-    // Small delay for realism
     setTimeout(() => {
       log(`Máquina lanza dado: ${roll}`);
       log(`Máquina avanza ${roll} casillas a pos ${machine.position}.`);
@@ -328,7 +285,6 @@ function updateFromMips() {
   machine.money = mips.getRegisterValue("$s4");
   machine.treasures = mips.getRegisterValue("$s5");
 
-  // Check finished state based on position
   if (player.position >= boardSize - 1) player.finished = true;
   if (machine.position >= boardSize - 1) machine.finished = true;
 
@@ -345,7 +301,6 @@ function renderBoard() {
   const pPos = player.position;
   const mPos = machine.position;
 
-  // Read memory
   const bytes = mips.readMemoryBytes(baseAddr, size * 4);
 
   let html = "";
@@ -360,7 +315,6 @@ function renderBoard() {
     let classes = "board-cell";
 
     if (val === 0) {
-      // Claimed - Check history
       const original = initialBoard[i];
       if (original === -1) {
         content = "💎";
@@ -370,7 +324,6 @@ function renderBoard() {
         classes += " money-text";
       }
     } else {
-      // Unclaimed
       content = "?";
     }
 
@@ -427,7 +380,6 @@ function endGame(reason: string) {
   } else if (machine.money > player.money) {
     winner = "MÁQUINA";
   } else {
-    // Tie break by treasures
     if (player.treasures > machine.treasures) {
       winner = "JUGADOR (por tesoros)";
     } else if (machine.treasures > player.treasures) {
@@ -445,9 +397,31 @@ function endGame(reason: string) {
     log(`¡ES UN EMPATE! Nadie se lleva el pozo.`, "highlight");
     els.status.textContent = "EMPATE";
   } else {
-    log(`¡GANADOR: ${winner}! ��`, "success");
+    log(`¡GANADOR: ${winner}! `, "success");
     log(`Premio total acumulado: $${totalPot}`, "success");
     els.status.textContent = `GANADOR: ${winner}`;
+  }
+
+  if (
+    gameOverModal &&
+    winnerDisplay &&
+    gameOverReason &&
+    finalPMoney &&
+    finalPTreasures &&
+    finalMMoney &&
+    finalMTreasures
+  ) {
+    winnerDisplay.textContent =
+      winner === "EMPATE" ? "¡EMPATE!" : `¡GANADOR: ${winner}!`;
+    gameOverReason.textContent = reason;
+    finalPMoney.textContent = player.money.toString();
+    finalPTreasures.textContent = player.treasures.toString();
+    finalMMoney.textContent = machine.money.toString();
+    finalMTreasures.textContent = machine.treasures.toString();
+
+    setTimeout(() => {
+      gameOverModal.classList.remove("hidden");
+    }, 1000);
   }
 }
 
@@ -475,21 +449,26 @@ function log(
   logsContainer.scrollTop = logsContainer.scrollHeight;
 }
 
-// --- Team Modal Logic ---
 const btnTeam = document.getElementById("btn-team");
 const teamModal = document.getElementById("team-modal");
 const closeModal = document.getElementById("close-modal");
 
 if (btnTeam && teamModal && closeModal) {
   btnTeam.addEventListener("click", () => {
-    teamModal.classList.remove("hidden");
+    if (welcomeScreen.classList.contains("hidden")) {
+      gameScreen.classList.add("hidden");
+      welcomeScreen.classList.remove("hidden");
+      if (btnTeam) btnTeam.textContent = "EQUIPO";
+      log("--- REINICIANDO SISTEMA ---", "dim");
+    } else {
+      teamModal.classList.remove("hidden");
+    }
   });
 
   closeModal.addEventListener("click", () => {
     teamModal.classList.add("hidden");
   });
 
-  // Close on click outside
   teamModal.addEventListener("click", (e) => {
     if (e.target === teamModal) {
       teamModal.classList.add("hidden");
@@ -497,7 +476,6 @@ if (btnTeam && teamModal && closeModal) {
   });
 }
 
-// --- Rules Modal Logic ---
 const btnRules = document.getElementById("btn-rules");
 const rulesModal = document.getElementById("rules-modal");
 const closeRulesModal = document.getElementById("close-rules-modal");
@@ -511,7 +489,6 @@ if (btnRules && rulesModal && closeRulesModal) {
     rulesModal.classList.add("hidden");
   });
 
-  // Close on click outside
   rulesModal.addEventListener("click", (e) => {
     if (e.target === rulesModal) {
       rulesModal.classList.add("hidden");
@@ -519,7 +496,6 @@ if (btnRules && rulesModal && closeRulesModal) {
   });
 }
 
-// --- MIPS Modal Logic ---
 const btnMips = document.getElementById("btn-mips");
 const mipsModal = document.getElementById("mips-modal");
 const closeMipsModal = document.getElementById("close-mips-modal");
@@ -533,10 +509,39 @@ if (btnMips && mipsModal && closeMipsModal) {
     mipsModal.classList.add("hidden");
   });
 
-  // Close on click outside
   mipsModal.addEventListener("click", (e) => {
     if (e.target === mipsModal) {
       mipsModal.classList.add("hidden");
+    }
+  });
+}
+
+const gameOverModal = document.getElementById("game-over-modal");
+const closeGameOverModal = document.getElementById("close-game-over-modal");
+const btnRestartModal = document.getElementById("btn-restart-modal");
+const winnerDisplay = document.getElementById("winner-display");
+const gameOverReason = document.getElementById("game-over-reason");
+const finalPMoney = document.getElementById("final-p-money");
+const finalPTreasures = document.getElementById("final-p-treasures");
+const finalMMoney = document.getElementById("final-m-money");
+const finalMTreasures = document.getElementById("final-m-treasures");
+
+if (gameOverModal && closeGameOverModal && btnRestartModal) {
+  closeGameOverModal.addEventListener("click", () => {
+    gameOverModal.classList.add("hidden");
+  });
+
+  btnRestartModal.addEventListener("click", () => {
+    gameOverModal.classList.add("hidden");
+    gameScreen.classList.add("hidden");
+    welcomeScreen.classList.remove("hidden");
+    if (btnTeam) btnTeam.textContent = "EQUIPO";
+    log("--- REINICIANDO SISTEMA ---", "dim");
+  });
+
+  gameOverModal.addEventListener("click", (e) => {
+    if (e.target === gameOverModal) {
+      gameOverModal.classList.add("hidden");
     }
   });
 }

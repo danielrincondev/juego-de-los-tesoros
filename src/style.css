@@ -45,18 +45,17 @@ body {
   padding: 2rem;
   max-height: 100vh;
   overflow-y: auto;
-  scrollbar-width: none; /* Firefox */
+  scrollbar-width: none;
 }
 
 #app::-webkit-scrollbar {
-  display: none; /* Chrome/Safari/Opera */
+  display: none;
 }
 
 .hidden {
   display: none !important;
 }
 
-/* Navbar */
 .navbar {
   display: flex;
   justify-content: space-between;
@@ -81,7 +80,6 @@ body {
   color: white;
 }
 
-/* Buttons */
 .btn-white {
   background-color: white;
   color: black;
@@ -134,7 +132,6 @@ body {
   text-decoration: underline;
 }
 
-/* Inputs */
 .dark-input {
   background-color: #222;
   border: 1px solid #333;
@@ -180,7 +177,6 @@ body {
   min-height: 1.2em;
 }
 
-/* Hero Section */
 .hero {
   display: flex;
   justify-content: space-between;
@@ -246,7 +242,6 @@ h1 {
   white-space: pre;
 }
 
-/* Preview Section */
 .preview-section {
   border: 1px solid var(--border-color);
   background-color: #151515;
@@ -448,7 +443,6 @@ h1 {
   }
 }
 
-/* New Styles */
 .btn-large {
   padding: 1rem 2rem;
   font-size: 1rem;
@@ -492,7 +486,6 @@ h1 {
   font-size: 0.9rem;
 }
 
-/* Modal */
 .modal {
   position: fixed;
   top: 0;
@@ -565,7 +558,6 @@ h1 {
   font-weight: 600;
 }
 
-/* Animation */
 @keyframes blink {
   0%,
   100% {
@@ -583,16 +575,12 @@ h1 {
   color: var(--accent-color);
 }
 
-/* --- New Styles --- */
-
-/* Large Button */
 .btn-large {
   padding: 1rem 2rem;
   font-size: 1rem;
   letter-spacing: 0.5px;
 }
 
-/* Rules Section */
 .rules-section {
   margin-top: 4rem;
   padding: 2rem;
@@ -697,7 +685,6 @@ h1 {
   font-weight: 500;
 }
 
-/* Matrix Canvas */
 #hero-graphic {
   position: relative;
   width: 100%;
@@ -746,7 +733,6 @@ h1 {
   }
 }
 
-/* Rules Modal Content */
 .rules-grid-modal {
   display: flex;
   flex-direction: column;
@@ -766,7 +752,6 @@ h1 {
   line-height: 1.5;
 }
 
-/* Board Visual Representation */
 .board-visual {
   display: flex;
   gap: 2px;

@@ -12,22 +12,21 @@
       rel="stylesheet"
     />
   </head>
+
   <body>
     <div class="isometric-grid"></div>
+
     <div id="app">
       <nav class="navbar">
         <div class="logo" id="app-logo" style="cursor: pointer">
           <span style="font-weight: 700; letter-spacing: -0.5px">ESPOL</span>
           <span style="color: var(--text-dim)">/ CCPG1049</span>
         </div>
-        <div class="nav-links">
-          <!-- Links removed -->
-        </div>
+        <div class="nav-links"></div>
         <button id="btn-team" class="btn-white">EQUIPO</button>
       </nav>
 
       <main>
-        <!-- Welcome / Config Screen -->
         <section id="welcome-screen" class="hero">
           <div class="hero-content">
             <div class="badge">
@@ -59,12 +58,9 @@
               <p id="config-error" class="error-msg"></p>
             </div>
           </div>
-          <div class="hero-graphic" id="hero-graphic">
-            <!-- Grid moved to background -->
-          </div>
+          <div class="hero-graphic" id="hero-graphic"></div>
         </section>
 
-        <!-- Game Screen -->
         <section id="game-screen" class="preview-section hidden">
           <div id="board-visual" class="board-visual"></div>
           <div class="tabs">
@@ -75,7 +71,6 @@
           </div>
 
           <div class="preview-grid">
-            <!-- Player Column -->
             <div class="preview-col">
               <div class="col-header">
                 JUGADOR (USUARIO)
@@ -124,7 +119,6 @@
               </div>
             </div>
 
-            <!-- Machine Column -->
             <div class="preview-col">
               <div class="col-header">
                 MÁQUINA (CPU)
@@ -137,9 +131,10 @@
                 </div>
                 <div class="stat-item">
                   <span class="label">DINERO</span>
-                  <span class="value-text success"
-                    >$<span id="m-money">0</span></span
-                  >
+                  <span class="value-text success">
+                    $
+                    <span id="m-money">0</span>
+                  </span>
                 </div>
                 <div class="stat-item">
                   <span class="label">TESOROS</span>
@@ -155,7 +150,6 @@
               </div>
             </div>
 
-            <!-- Logs Column -->
             <div class="preview-col wide">
               <div class="user-info">
                 <div class="info-group">
@@ -181,7 +175,6 @@
           </div>
         </section>
 
-        <!-- Team Modal -->
         <div id="team-modal" class="modal hidden">
           <div class="modal-content">
             <div class="modal-header">
@@ -201,7 +194,6 @@
           </div>
         </div>
 
-        <!-- Rules Modal -->
         <div id="rules-modal" class="modal hidden">
           <div class="modal-content">
             <div class="modal-header">
@@ -234,7 +226,61 @@
           </div>
         </div>
 
-        <!-- MIPS Modal -->
+        <div id="game-over-modal" class="modal hidden">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3>JUEGO TERMINADO</h3>
+              <button id="close-game-over-modal" class="close-btn">×</button>
+            </div>
+            <div class="game-over-content">
+              <h2
+                id="winner-display"
+                style="
+                  text-align: center;
+                  margin-bottom: 1rem;
+                  color: white;
+                  font-size: 2rem;
+                "
+              >
+                GANADOR
+              </h2>
+              <p
+                id="game-over-reason"
+                style="
+                  text-align: center;
+                  color: var(--text-dim);
+                  margin-bottom: 2rem;
+                "
+              >
+                Razon
+              </p>
+
+              <div class="code-block">
+                <div class="stat-item">
+                  <span class="label">JUGADOR</span>
+                  <span class="value-text"
+                    >$<span id="final-p-money">0</span> |
+                    <span id="final-p-treasures">0</span> 💎</span
+                  >
+                </div>
+                <div class="stat-item">
+                  <span class="label">MÁQUINA</span>
+                  <span class="value-text"
+                    >$<span id="final-m-money">0</span> |
+                    <span id="final-m-treasures">0</span> 💎</span
+                  >
+                </div>
+              </div>
+
+              <div style="margin-top: 2rem; text-align: center">
+                <button id="btn-restart-modal" class="btn-white btn-large">
+                  JUGAR DE NUEVO
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div id="mips-modal" class="modal hidden">
           <div class="modal-content wide-modal">
             <div class="modal-header">
@@ -246,9 +292,7 @@
                 class="code-block terminal-scroll"
                 id="mips-code-display"
                 style="max-height: 400px"
-              >
-                <!-- Code will be injected here -->
-              </div>
+              ></div>
             </div>
           </div>
         </div>
